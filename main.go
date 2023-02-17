@@ -25,7 +25,7 @@ func init() {
 
 func main() {
 	var mux = http.NewServeMux()
-	mux.HandleFunc("/webhook", handleWebhook)
+	mux.HandleFunc("/", handleWebhook)
 	ridge.Run(":8000", "/", mux)
 }
 
