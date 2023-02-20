@@ -4,6 +4,7 @@ import "fmt"
 
 type MackerelWebhook struct {
 	Orgname  string        `json:"orgName"`
+	Event    string        `json:"event"`
 	ImageURL string        `json:"imageURL"`
 	Memo     string        `json:"memo"`
 	Alert    MackerelAlert `json:"alert"`
@@ -26,8 +27,16 @@ type MackerelAlert struct {
 	Status            string  `json:"status"`
 }
 
+func (h MackerelWebhook) IsTestPayload() bool {
+	return h.Orgname == "" && h.Alert.ID == "" && h.Alert.Status == ""
+}
+
+func (h MackerelWebhook) IsAlertEvent() bool {
+	return h.Event == "alert"
+}
+
 func (h MackerelWebhook) IncidentTitle() string {
-	return fmt.Sprintf("[%s] %s", h.Orgname, h.Alert.Monitorname)
+	return fmt.Sprintf("[%s] %s is %s", h.Orgname, h.Alert.Monitorname, h.Alert.Status)
 }
 
 func (h MackerelWebhook) ToGrafanaOnCallFormattedWebhook() GrafanaOnCallFormattedWebhook {
@@ -40,7 +49,7 @@ func (h MackerelWebhook) ToGrafanaOnCallFormattedWebhook() GrafanaOnCallFormatte
 	return GrafanaOnCallFormattedWebhook{
 		AlertUID:              h.Alert.ID,
 		Title:                 h.IncidentTitle(),
-		ImageURL:              h.Memo,
+		ImageURL:              h.ImageURL,
 		State:                 alerting,
 		LinkToUpstreamDetails: h.Alert.URL,
 		Message:               h.Memo,
