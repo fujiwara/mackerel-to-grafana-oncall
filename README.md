@@ -24,6 +24,8 @@ This server endpoint works as Mackerel alerting Webhook URL.
 
 This server accepts [Mackerel Webhook](https://mackerel.io/ja/docs/entry/howto/alerts/webhook) events, and deleagates to [Grafana OnCall](https://grafana.com/products/oncall/).
 
+This application binary can run as a standalone http server and also run as an AWS Lambda function bootstrap called by function URL or API Gateway.
+
 ## LISENCE
 
 MIT
