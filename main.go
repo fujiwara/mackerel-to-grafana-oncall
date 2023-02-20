@@ -98,7 +98,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
-	log.Printf("[info] recieved %s is %s", hook.IncidentTitle(), hook.Alert.Status)
+	log.Printf("[info] recieved webhook: %s", hook.IncidentTitle())
 	log.Printf("[debug] %#v", hook)
 
 	var grafanaHook GrafanaOnCallFormattedWebhook
