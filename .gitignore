@@ -13,4 +13,5 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-mackerel-to-grafana-oncall
+./mackerel-to-grafana-oncall
+dist/*

@@ -1,4 +1,4 @@
-package main
+package oncall
 
 import (
 	"bytes"
@@ -42,7 +42,7 @@ func envToFlag(f *flag.Flag) {
 	}
 }
 
-func main() {
+func Run() error {
 	var port int
 	var showVersion bool
 	flag.BoolVar(&Debug, "debug", false, "debug mode")
@@ -55,7 +55,7 @@ func main() {
 
 	if showVersion {
 		fmt.Println(Version)
-		os.Exit(0)
+		return nil
 	}
 
 	filter := &logutils.LevelFilter{
@@ -69,8 +69,7 @@ func main() {
 	log.SetOutput(filter)
 
 	if err := validate(); err != nil {
-		log.Printf("[error] %s", err)
-		os.Exit(1)
+		return err
 	}
 	log.Println("[info] starting mackerel-to-grafana-oncall version:", Version)
 	log.Println("[info] grafana-oncall-url:", maskURL(GrafanaOnCallURL))
@@ -80,6 +79,7 @@ func main() {
 	mux.HandleFunc("/", handleWebhook)
 	mux.HandleFunc("/health", handleHealth)
 	ridge.Run(fmt.Sprintf(":%d", port), "/", mux)
+	return nil
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {

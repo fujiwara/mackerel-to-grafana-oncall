@@ -1,4 +1,4 @@
-package main
+package oncall
 
 type GrafanaOnCallFormattedWebhook struct {
 	AlertUID              string `json:"alert_uid"`

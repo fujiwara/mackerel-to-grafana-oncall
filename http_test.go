@@ -1,4 +1,4 @@
-package main_test
+package oncall_test
 
 import (
 	"bytes"
@@ -10,14 +10,14 @@ import (
 	"testing"
 	"time"
 
-	main "github.com/fujiwara/mackerel-to-grafana-oncall"
+	oncall "github.com/fujiwara/mackerel-to-grafana-oncall"
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestHTTPServer(t *testing.T) {
-	ch := make(chan main.GrafanaOnCallFormattedWebhook, 1)
+	ch := make(chan oncall.GrafanaOnCallFormattedWebhook, 1)
 	grafanaServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hook := main.GrafanaOnCallFormattedWebhook{}
+		hook := oncall.GrafanaOnCallFormattedWebhook{}
 		if err := json.NewDecoder(r.Body).Decode(&hook); err != nil {
 			t.Errorf("failed to decode request body: %s", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -30,19 +30,19 @@ func TestHTTPServer(t *testing.T) {
 	defer grafanaServer.Close()
 
 	proxyServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		main.GrafanaOnCallURL = grafanaServer.URL
-		main.AllowOnCallURLParam = true
-		main.HandleWebhook(w, r)
+		oncall.GrafanaOnCallURL = grafanaServer.URL
+		oncall.AllowOnCallURLParam = true
+		oncall.HandleWebhook(w, r)
 	}))
 	defer proxyServer.Close()
 
 	// test
-	payload := main.MackerelWebhook{
+	payload := oncall.MackerelWebhook{
 		Orgname:  "test org",
 		Event:    "alert",
 		Memo:     "test memo",
 		ImageURL: "https://example.com/alerts/1234.png",
-		Alert: main.MackerelAlert{
+		Alert: oncall.MackerelAlert{
 			ID:          "1234",
 			Status:      "critical",
 			URL:         "https://example.com/alerts/1234",
@@ -69,7 +69,7 @@ func TestHTTPServer(t *testing.T) {
 	case <-timeout:
 		t.Errorf("timeout")
 	case grafanaRecieved := <-ch:
-		expected := main.GrafanaOnCallFormattedWebhook{
+		expected := oncall.GrafanaOnCallFormattedWebhook{
 			AlertUID:              "1234",
 			Title:                 "[test org] test monitor is critical",
 			ImageURL:              "https://example.com/alerts/1234.png",
