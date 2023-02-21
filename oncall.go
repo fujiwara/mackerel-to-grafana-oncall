@@ -21,11 +21,14 @@ import (
 )
 
 var (
-	Version             = "current"
-	AllowOnCallURLParam = false
-	Debug               = false
-	GrafanaOnCallURL    = ""
-	GrafanaTimeout      = 30 * time.Second
+	Version                 = "current"
+	AllowOnCallURLParam     = false
+	Debug                   = false
+	GrafanaOnCallURL        = ""
+	GrafanaOnCallURLAliases = ""
+	GrafanaTimeout          = 30 * time.Second
+
+	Aliases = OnCallURLAliases{}
 )
 
 func validate() error {
@@ -48,6 +51,7 @@ func Run() error {
 	flag.BoolVar(&Debug, "debug", false, "debug mode")
 	flag.BoolVar(&AllowOnCallURLParam, "allow-oncall-url-param", false, "allow Grafana oncall by url param")
 	flag.StringVar(&GrafanaOnCallURL, "grafana-oncall-url", "", "Grafana oncall webhook url")
+	flag.StringVar(&GrafanaOnCallURLAliases, "grafana-oncall-url-aliases", "", "Grafana oncall webhook url aliases(string of JSON object)")
 	flag.IntVar(&port, "port", 8000, "port number")
 	flag.BoolVar(&showVersion, "version", false, "show version")
 	flag.VisitAll(envToFlag)
@@ -74,6 +78,15 @@ func Run() error {
 	log.Println("[info] starting mackerel-to-grafana-oncall version:", Version)
 	log.Println("[info] grafana-oncall-url:", maskURL(GrafanaOnCallURL))
 	log.Println("[info] allow-oncall-url-param:", AllowOnCallURLParam)
+	if GrafanaOnCallURLAliases != "" {
+		log.Println("[info] grafana-oncall-url-aliases:", GrafanaOnCallURLAliases)
+		if err := parseAliases(GrafanaOnCallURLAliases, &Aliases); err != nil {
+			return err
+		}
+		for a, u := range Aliases {
+			log.Println("[info] alias:", a, "->", maskURL(u))
+		}
+	}
 
 	var mux = http.NewServeMux()
 	mux.HandleFunc("/", handleWebhook)
@@ -85,6 +98,20 @@ func Run() error {
 func handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintln(w, "OK")
+}
+
+func resolveOnCallURL(p string) (string, error) {
+	if p == "" {
+		return GrafanaOnCallURL, nil
+	}
+	if strings.HasPrefix(p, "https://") {
+		return p, nil
+	}
+	url, ok := Aliases.FindByAlias(p)
+	if !ok {
+		return "", fmt.Errorf("oncall_url %s not found in aliases", p)
+	}
+	return url, nil
 }
 
 func handleWebhook(w http.ResponseWriter, r *http.Request) {
@@ -113,14 +140,9 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var onCallURL string
-	if onCallURL = GrafanaOnCallURL; onCallURL == "" {
-		if AllowOnCallURLParam {
-			onCallURL = r.FormValue("oncall_url")
-		}
-	}
-	if onCallURL == "" {
-		errorResponse(w, http.StatusBadRequest, fmt.Errorf("oncall_url is required"))
+	onCallURL, err := resolveOnCallURL(r.URL.Query().Get("oncall_url"))
+	if err != nil {
+		errorResponse(w, http.StatusBadRequest, err)
 		return
 	}
 
