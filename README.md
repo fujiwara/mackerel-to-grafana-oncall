@@ -46,7 +46,7 @@ When the JSON strings provided as below, `oncall_url` URL parameter accepts `foo
 ```json
 {
   "foo": "https://oncall-prod-us-central-0.grafana.net/oncall/integrations/v1/formatted_webhook/xxxxxxx/",
-  "bar": "https://oncall-prod-us-central-0.grafana.net/oncall/integrations/v1/formatted_webhook/yyyyyy/",
+  "bar": "https://oncall-prod-us-central-0.grafana.net/oncall/integrations/v1/formatted_webhook/yyyyyy/"
 }
 ```
 
