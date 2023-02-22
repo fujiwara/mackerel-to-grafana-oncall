@@ -26,23 +26,23 @@ This server endpoint works as Mackerel alerting Webhook URL.
 
 ## Description
 
-This server accepts [Mackerel Webhook](https://mackerel.io/ja/docs/entry/howto/alerts/webhook) events, and deleagates to [Grafana OnCall](https://grafana.com/products/oncall/).
+This server accepts [Mackerel Webhook](https://mackerel.io/ja/docs/entry/howto/alerts/webhook) events and deleagates to [Grafana OnCall](https://grafana.com/products/oncall/).
 
-This application binary can run as a standalone http server and also run as an AWS Lambda function bootstrap called by function URL or API Gateway.
+This application binary can run as a standalone http server and also run as an AWS Lambda function bootstrap invoked by function URL or API Gateway.
 
 ## Configurations
 
 ### `-allow-oncall-url-param` and `-grafana-oncall-url`
 
-When `-allow-oncall-url-param` is true, a server accepts URL parameter `oncall_url` in query strings. The server will sent a webhook to the URL specified by `oncall_url`.
+When `-allow-oncall-url-param` is true, a server accepts URL parameter `oncall_url` in query strings. The server will send a webhook to the URL specified by `oncall_url`.
 
-Otherwise(by default), the server send a webhook to the URL defined by `-grafana-oncall-url`.
+Otherwise(by default), the server will send a webhook to the URL defined by `-grafana-oncall-url`.
 
 ### `-grafana-oncall-url-aliases`
 
 This flag defines aliases for `oncall_url` by JSON string.
 
-When the JSON strings provided as below, `oncall_url` URL parameter accepts `foo` and `bar`, and webhook will be sent to the defined URL by JSON.
+If the JSON strings are provided as below, `oncall_url` URL parameter accepts `foo` and `bar`, and the webhook will be sent to the defined URL by JSON.
 ```json
 {
   "foo": "https://oncall-prod-us-central-0.grafana.net/oncall/integrations/v1/formatted_webhook/xxxxxxx/",
