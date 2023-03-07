@@ -32,6 +32,8 @@ This server accepts [Mackerel Webhook](https://mackerel.io/ja/docs/entry/howto/a
 
 This application binary can run as a standalone http server and also run as an AWS Lambda function bootstrap invoked by function URL or API Gateway.
 
+![](diag.png)
+
 ## Configurations
 
 ### `-allow-oncall-url-param` and `-grafana-oncall-url`
