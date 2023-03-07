@@ -27,6 +27,7 @@ var (
 	GrafanaOnCallURL        = ""
 	GrafanaOnCallURLAliases = ""
 	GrafanaTimeout          = 30 * time.Second
+	CriticalOnly            = false
 
 	Aliases = OnCallURLAliases{}
 )
@@ -54,6 +55,7 @@ func Run() error {
 	flag.StringVar(&GrafanaOnCallURLAliases, "grafana-oncall-url-aliases", "", "Grafana oncall webhook url aliases(string of JSON object)")
 	flag.IntVar(&port, "port", 8000, "port number")
 	flag.BoolVar(&showVersion, "version", false, "show version")
+	flag.BoolVar(&CriticalOnly, "critical-only", false, "send critical only (ignore warning and unknown)")
 	flag.VisitAll(envToFlag)
 	flag.Parse()
 
@@ -116,13 +118,13 @@ func resolveOnCallURL(p string) (string, error) {
 
 func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		errorResponse(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
+		sendResponse(w, http.StatusMethodNotAllowed, fmt.Errorf("method not allowed"))
 		return
 	}
 	var hook MackerelWebhook
 	err := json.NewDecoder(r.Body).Decode(&hook)
 	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
+		sendResponse(w, http.StatusBadRequest, err)
 		return
 	}
 	log.Printf("[info] recieved webhook: %s", hook.IncidentTitle())
@@ -130,31 +132,40 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 
 	var grafanaHook GrafanaOnCallFormattedWebhook
 	if hook.IsTestPayload() {
-		log.Printf("[info] test payload.")
+		log.Printf("[info] test payload. %s", hook.ID())
 		grafanaHook = GrafanaOnCallFormattedWebhookTestPayload
 	} else if hook.IsAlertEvent() {
 		grafanaHook = hook.ToGrafanaOnCallFormattedWebhook()
+		if CriticalOnly && !hook.IsCritical() {
+			sendResponse(w, http.StatusNoContent, fmt.Errorf("not a critical event. ignored. ID:%s Event:%s", hook.ID(), hook.Event))
+			return
+		}
 	} else {
-		log.Printf("[info] not alert event. ignored.")
-		errorResponse(w, http.StatusNotModified, fmt.Errorf("not alert event. ignored. Event: %s", hook.Event))
+		sendResponse(w, http.StatusNoContent, fmt.Errorf("not alert event. ignored. ID:%s Event:%s", hook.ID(), hook.Event))
 		return
 	}
 
 	onCallURL, err := resolveOnCallURL(r.URL.Query().Get("oncall_url"))
 	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err)
+		sendResponse(w, http.StatusBadRequest, err)
 		return
 	}
 
 	if err := postToGrafanaOnCall(onCallURL, grafanaHook); err != nil {
-		errorResponse(w, http.StatusInternalServerError, err)
+		sendResponse(w, http.StatusInternalServerError, err)
 		return
 	}
-	log.Printf("[info] posted to %s", maskURL(onCallURL))
+	log.Printf("[info] posted to %s ID:%s", maskURL(onCallURL), hook.ID())
 }
 
-func errorResponse(w http.ResponseWriter, code int, err error) {
-	log.Printf("[error] %d %s", code, err)
+func sendResponse(w http.ResponseWriter, code int, err error) {
+	level := "info"
+	if code >= 500 {
+		level = "error"
+	} else if code >= 400 {
+		level = "warn"
+	}
+	log.Printf("[%s] %d %s", level, code, err)
 	w.WriteHeader(code)
 }
 
