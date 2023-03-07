@@ -8,6 +8,8 @@ A proxy of Mackerel alert webhook to [Grafana OnCall](https://grafana.com/produc
 Usage of ./mackerel-to-grafana-oncall:
   -allow-oncall-url-param
         allow Grafana oncall by url param
+  -critical-only
+        send critical only (ignore warning and unknown)
   -debug
         debug mode
   -grafana-oncall-url string
@@ -20,7 +22,7 @@ Usage of ./mackerel-to-grafana-oncall:
         show version
 ```
 
-Environment variables also can set these flags. `GRAFANA_ONCALL_URL`, `ALLOW_ON_CALL_URL_PARAM`, `PORT` and`DEBUG`.
+Environment variables also can set these flags. `GRAFANA_ONCALL_URL`, `ALLOW_ON_CALL_URL_PARAM`, `PORT` and etc.
 
 This server endpoint works as Mackerel alerting Webhook URL.
 

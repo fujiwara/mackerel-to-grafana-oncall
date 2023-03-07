@@ -1,6 +1,9 @@
 package oncall
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type MackerelWebhook struct {
 	Orgname  string        `json:"orgName"`
@@ -33,6 +36,14 @@ func (h MackerelWebhook) IsTestPayload() bool {
 
 func (h MackerelWebhook) IsAlertEvent() bool {
 	return h.Event == "alert"
+}
+
+func (h MackerelWebhook) IsCritical() bool {
+	return strings.ToLower(h.Alert.Status) == "critical"
+}
+
+func (h MackerelWebhook) ID() string {
+	return h.Alert.ID
 }
 
 func (h MackerelWebhook) IncidentTitle() string {
