@@ -136,7 +136,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 		grafanaHook = GrafanaOnCallFormattedWebhookTestPayload
 	} else if hook.IsAlertEvent() {
 		grafanaHook = hook.ToGrafanaOnCallFormattedWebhook()
-		if CriticalOnly && !hook.IsCritical() {
+		if CriticalOnly && !hook.IsCriticalOrOK() {
 			sendResponse(w, http.StatusNoContent, fmt.Errorf("not a critical event. ignored. ID:%s Event:%s", hook.ID(), hook.Event))
 			return
 		}
