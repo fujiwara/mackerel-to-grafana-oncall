@@ -59,6 +59,30 @@ var testCases = []struct {
 		},
 		status: http.StatusNoContent,
 	},
+	{
+		input: oncall.MackerelWebhook{
+			Orgname:  "test org",
+			Event:    "alert",
+			Memo:     "test memo",
+			ImageURL: "https://example.com/alerts/1234.png",
+			Alert: oncall.MackerelAlert{
+				ID:          "1234",
+				Status:      "ok",
+				URL:         "https://example.com/alerts/1234",
+				Monitorname: "test monitor",
+				Isopen:      false,
+			},
+		},
+		status: http.StatusOK,
+		want: oncall.GrafanaOnCallFormattedWebhook{
+			AlertUID:              "1234",
+			Title:                 "[test org] test monitor is ok",
+			ImageURL:              "https://example.com/alerts/1234.png",
+			LinkToUpstreamDetails: "https://example.com/alerts/1234",
+			State:                 "ok",
+			Message:               "test memo",
+		},
+	},
 }
 
 func TestHTTPServer(t *testing.T) {

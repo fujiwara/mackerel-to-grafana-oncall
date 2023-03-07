@@ -38,8 +38,9 @@ func (h MackerelWebhook) IsAlertEvent() bool {
 	return h.Event == "alert"
 }
 
-func (h MackerelWebhook) IsCritical() bool {
-	return strings.ToLower(h.Alert.Status) == "critical"
+func (h MackerelWebhook) IsCriticalOrOK() bool {
+	s := strings.ToLower(h.Alert.Status)
+	return s == "critical" || s == "ok"
 }
 
 func (h MackerelWebhook) ID() string {
